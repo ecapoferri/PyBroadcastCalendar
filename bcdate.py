@@ -9,7 +9,8 @@ Raises:
 """
 import datetime
 from dataclasses import dataclass, field
-from typing import Annotated, Type
+from pathlib import Path
+from typing import Annotated
 
 from pandas import DataFrame as Df
 from pandas import read_csv as pd_read_csv
@@ -18,7 +19,8 @@ from pandas import to_datetime as pd_to_datetime
 Date = Annotated[datetime.date, 'datetime.date']
 
 # Constants
-DATE_TABLE_PATH_STR = 'dates.csv'
+CWD = Path.cwd()
+DATE_TABLE_CSV_PATH = Path('dates.csv')
 WKDAY_ABBRV_MAP = {
     1: 'mo',
     2: 'tu',
@@ -34,6 +36,38 @@ class DateTableLimitError(ValueError):
     """Used to indicate date outside existing Broadcast Year value range."""
 
 
+def date_df(path_: Path) -> Df:
+    """_summary_
+
+    Args:
+        path_ (str, optional): Path to date table csv. Defaults to
+            'dates.csv'.
+
+    Returns:
+        Df: DataFrame with first days of each month in the broadcast
+            calendar, month indices, and broadcast year.
+    """
+    conf: list[dict[str, str | bool]] = [
+        {'col': 'year', 'astype': 'UInt16'},
+        {'col': 'month_id', 'astype': 'UInt8'},
+        {'col': 'month_start', 'astype': False},
+    ]
+    # Load table of month start df.
+    astype: dict[str, str] = \
+        {d['col']: d['astype'] for d in conf if d['astype']}  # type: ignore
+    usecols: list[str] = [str(d['col']) for d in conf]
+
+    df_ = pd_read_csv(path_, encoding='utf-8', usecols=usecols)\
+        .convert_dtypes()
+
+    df_.month_start = pd_to_datetime(df_.month_start).dt.date
+    df_ = df_\
+        .astype(astype)\
+        .sort_values('month_start')
+
+    return df_
+
+
 @dataclass
 class BroadcastDate:
     """
@@ -43,6 +77,7 @@ class BroadcastDate:
     Raises:
         DateTableLimitError: _description_
     """
+    dates_df: Df
     report_date: Date = field(
         init=True, default=datetime.datetime.now().date())
 
@@ -64,10 +99,8 @@ class BroadcastDate:
     next_wk_qtr_id: int = field(init=False)
 
     def __post_init__(self):
-        dates_df: Df = date_df()
-
-        min_date = date_df().month_start.min() + datetime.timedelta(days=7)
-        max_date = date_df().month_start.max()
+        min_date = self.dates_df.month_start.min() + datetime.timedelta(days=7)
+        max_date = self.dates_df.month_start.max()
 
         if not min_date <= self.report_date <= max_date:
             raise DateTableLimitError(
@@ -78,7 +111,7 @@ class BroadcastDate:
             self.year_start,\
             self.month_id,\
             self.month_start = \
-            bc_date_values(self.report_date, dates_df)
+            bc_date_values(self.report_date, self.dates_df)
         # Day id of the day of the year, aka, 'n' days into the year.
         self.year_day_id = get_year_day_id(self.report_date, self.year_start)
 
@@ -101,13 +134,13 @@ class BroadcastDate:
             prev_wk_yr_start,\
             prev_wk_month_id,\
             _ = \
-            bc_date_values(prev_wk_date, dates_df)
+            bc_date_values(prev_wk_date, self.dates_df)
 
         self.next_wk_year_id,\
             next_wk_yr_start,\
             next_wk_month_id,\
             _ = \
-            bc_date_values(next_wk_date, dates_df)
+            bc_date_values(next_wk_date, self.dates_df)
 
         self.prev_wk_week_id,\
             self.next_wk_week_id = (
@@ -128,35 +161,6 @@ class BroadcastDate:
                 for id in
                 (prev_wk_month_id, next_wk_month_id)
             )
-
-
-def date_df(path_: str = DATE_TABLE_PATH_STR) -> Df:
-    """_summary_
-
-    Args:
-        path_ (str, optional): Path to date table csv. Defaults to
-            'dates.csv'.
-
-    Returns:
-        Df: DataFrame with first days of each month in the broadcast
-            calendar, month indices, and broadcast year.
-    """
-    conf: list[dict[str, str | bool]] = [
-        {'col': 'year', 'astype': 'UInt16'},
-        {'col': 'month_id', 'astype': 'UInt8'},
-        {'col': 'month_start', 'astype': False},
-    ]
-    # Load table of month start df.
-    astype: dict[str, str] = \
-        {d['col']: d['astype'] for d in conf if d['astype']}  # type: ignore
-    usecols: list[str] = [str(d['col']) for d in conf]
-    df_ = pd_read_csv(path_, encoding='utf-8', usecols=usecols)\
-        .convert_dtypes()
-    df_.month_start = pd_to_datetime(df_.month_start).dt.date
-    df_ = df_\
-        .astype(astype)\
-        .sort_values('month_start')
-    return df_
 
 
 def bc_date_values(date_: Date, dates_df_: Df,
