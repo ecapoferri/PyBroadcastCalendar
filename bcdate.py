@@ -62,12 +62,12 @@ class BroadcastDate:
         self.prevwk_year_id,\
         self.prevwk_qtr_id, _,\
         self.prevwk_week_id, _ = \
-            bcweek_values(self.report_date)
+            bcweek_values(self.report_date - timedelta(days=7))
 
         self.nextwk_year_id,\
         self.nextwk_qtr_id, _,\
         self.nextwk_week_id, _ = \
-            bcweek_values(self.report_date)
+            bcweek_values(self.report_date + timedelta(days=7))
 
 
 def week_dates_array(monday_date: Date) -> Generator[Date, None, None]:
