@@ -28,15 +28,8 @@ WKDAY_ABBRV_MAP = {
 class BroadcastDate:
     """Dataclass: with a datetime.date as argument, returns other relative
         dates and broadcast calendar indices.
-
-    Raises:
-        _DateTableLimitError: If date is outside the range of dates
-            generated DataFrame series of month start dates. Thsi should
-            be depricated as the DataFrame calculation is now dynamic
-            and relative to the supplied self.report_date.
     """
-    report_date: Date = field(
-        init=True, default=datetime.now().date())
+    report_date: Date = field(init=True, default=datetime.now().date())
 
     # dates_df: Df
     year_id: int = field(init=False)
@@ -97,8 +90,8 @@ def calc_year_month_ids(date_: Date) -> tuple[int, int, Date]:
 
 
 def calc_week_id(year_id_: int, monday_date: Date) -> tuple[int, Date]:
-    """Returns a broadcast week id given a date for the start of the week.
-        Also returns the start date of the broadcast week."""
+    """Returns a broadcast week id given a date for the start of the
+        week. Also returns the start date of the broadcast week."""
     year_jan_first = datetime(year=year_id_, month=1, day=1).date()
     # Gets the first day of the broadcast year with the given date.
     _, _, year_start_monday = calc_year_month_ids(year_jan_first)
@@ -118,10 +111,8 @@ def bcweek_values(date_: Date) -> tuple[int, int, int, int, int]:
 
     week_id_: int
     year_start_: Date
-    week_id_, year_start_ = calc_week_id(
-        year_id_=year_id_,
-        monday_date=week_start_,
-    )
+    week_id_, year_start_ = calc_week_id(year_id_=year_id_,
+                                         monday_date=week_start_,)
     qtr_i_, _ = divmod(month_id_, 4)
     qtr_id_: int = int(qtr_i_) + 1
     day_id_: int = (date_ - year_start_).days + 1
