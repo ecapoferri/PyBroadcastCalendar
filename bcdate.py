@@ -77,16 +77,15 @@ class BroadcastDate:
             bcweek_values(self.report_date)
 
 
-
 def week_dates_array(monday_date: Date) -> Generator[Date, None, None]:
-    """Given a monday date, yield 7 days of dates for the week."""
+    """Given a Monday date, yield 7 days of dates for the week."""
     for wkd in range(7):
         yield monday_date + timedelta(days=wkd)
 
 
 def calc_year_month_ids(date_: Date) -> tuple[int, int, Date]:
     """TODO: DOCSTRING"""
-    # Date of monday of the week.
+    # Date of Monday of the week.
     week_start_ = (date_ - timedelta(days=date_.weekday()))
     # Determine the mininum day of the month within the current week.
     week_dates: list[Date] = list(week_dates_array(week_start_))
@@ -97,10 +96,8 @@ def calc_year_month_ids(date_: Date) -> tuple[int, int, Date]:
     return min_month_day_.year, min_month_day_.month, week_start_
 
 
-def calc_week_id(
-                 year_id_: int,
-                 monday_date: Date) -> tuple[int, Date]:
-    """Gets week id given a monday date.
+def calc_week_id(year_id_: int, monday_date: Date) -> tuple[int, Date]:
+    """Returns a broadcast week id given a date for the start of the week.
         Also returns the start date of the broadcast week."""
     year_jan_first = datetime(year=year_id_, month=1, day=1).date()
     # Gets the first day of the broadcast year with the given date.
