@@ -47,7 +47,6 @@ class BroadcastDate:
     nextwk_week_id: int = field(init=False)
 
     def __post_init__(self):
-        # return year_id_, year_start_, month_id, month_start_
         self.year_id,\
         self.qtr_id,\
         self.month_id,\
