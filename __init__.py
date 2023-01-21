@@ -1,3 +1,4 @@
-__all__ = ['main']
+"It's __init__.py ."
+__all__ = ['bcc_main']
 
-from .main import *
+from .bcc_main import *
