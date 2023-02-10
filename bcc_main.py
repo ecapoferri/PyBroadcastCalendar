@@ -1,6 +1,8 @@
-"""Module supporting the dataclass: BroadcastDate which, taking a
-    Date as argument, returns other relative dates and
-    broadcast calendar indices. Functions are available for input."""
+"""Module supporting the dataclass, BroadcastDate, which, taking a
+    datetime.date as argument, returns dataclass object with other
+    relative dates and broadcast calendar indices. Functions are
+    available for use outside the class as well for deriving other
+    values relative to the US broadcast calendar."""
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from typing import Annotated, Generator
