@@ -1,6 +1,7 @@
 """Module supporting the dataclass: BroadcastDate which, taking a
     datetime.date as argument, returns other relative dates and
-    broadcast calendar indices. Functions are available for input."""
+    broadcast calendar indices. Functions are available for input.
+    Requires python>=3.10."""
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from typing import Annotated, Generator
@@ -12,71 +13,37 @@ _DateTableRow = Annotated[dict[str, int | _Date],
     r'_DateTableRow{int: Year, int: MonthID, datetime.date: MonthStart}',
 ]
 
-# Constants
-
 # Expected year values are used to validate input values.
-MIN_YEAR = 1900
-MAX_YEAR = 2400
-
-WKDAY_ABBRV_MAP = [
-    'mo',
-    'tu',
-    'we',
-    'th',
-    'fr',
-    'sa',
-    'su',
-]
-
+MIN_YEAR = 1950
+MAX_YEAR = 2200
 
 class BroadcastCalendarValErr(ValueError):
     """Essentially an alias for ValueError. The input values for (year_)
-        and (month_range) are validated for type and range."""
+        and (month_range) are validated for type and realistic range."""
 
 
 @dataclass
 class BroadcastDate:
     """Dataclass: with a datetime.date as argument, returns other relative
-        dates and broadcast calendar indices.
-    """
+        dates and broadcast calendar indices."""
     report_date: _Date = field(init=True, default=datetime.now().date(),)
 
-    # dates_df: Df
     year_id: int = field(init=False,)
     qtr_id: int = field(init=False,)
     month_id: int = field(init=False,)
     day_id: int = field(init=False,)
     weekday_id: int = field(init=False,)
     week_id: int = field(init=False,)
-    wkday_abbr: str = field(init=False,)
-    prevwk_year_id: int = field(init=False,)
-    prevwk_qtr_id: int = field(init=False,)
-    prevwk_week_id: int = field(init=False,)
-    nextwk_year_id: int = field(init=False,)
-    nextwk_qtr_id: int = field(init=False,)
-    nextwk_week_id: int = field(init=False,)
 
     def __post_init__(self,):
         self.year_id,\
         self.qtr_id,\
         self.month_id,\
         self.week_id,\
-        self.day_id = \
-            bcweek_values(self.report_date,)
+        self.day_id \
+        = bcweek_values(self.report_date,)
 
         self.weekday_id = self.report_date.weekday() + 1
-
-        self.wkday_abbr = WKDAY_ABBRV_MAP[self.weekday_id - 1]
-
-        self.prevwk_year_id,\
-        self.prevwk_qtr_id, _,\
-        self.prevwk_week_id, _ = \
-            bcweek_values(self.report_date - timedelta(days=7),)
-
-        self.nextwk_year_id,\
-        self.nextwk_qtr_id, _,\
-        self.nextwk_week_id, _ = \
-            bcweek_values(self.report_date + timedelta(days=7),)
 
 
 def week_dates_array(monday_date: _Date,) -> Generator[_Date, None, None]:
@@ -86,7 +53,20 @@ def week_dates_array(monday_date: _Date,) -> Generator[_Date, None, None]:
 
 
 def calc_year_month_ids(date_: _Date,) -> tuple[int, int, _Date]:
-    """TODO: DOCSTRING"""
+    """Returns a broadcast week id given a date for the start of the
+        week. Also returns the start date of the broadcast week.
+
+    Args:
+        date_ (_Date): A normal Gregorian Calendar data as a
+            datetime.date.
+
+    Returns:
+        tuple[int, int, _Date]:
+            (int): Year ID of the broadcast calendar year.
+            (int): Month ID of the broadcast calendar month.
+            (_Date): Gregorian caldendar date (as datetime.date) of the
+                day of the broadcast calendar week.
+    """
     # _Date of Monday of the week.
     week_start_ = (date_ - timedelta(days=date_.weekday()))
     # Determine the mininum day of the month within the current week.
@@ -100,7 +80,18 @@ def calc_year_month_ids(date_: _Date,) -> tuple[int, int, _Date]:
 
 def calc_week_id(year_id_: int, monday_date: _Date,) -> tuple[int, _Date]:
     """Returns a broadcast week id given a date for the start of the
-        week. Also returns the start date of the broadcast week."""
+        week. Also returns the start date of the broadcast week.
+
+    Args:
+        year_id_ (int): Year ID of the broadcast calendar year.
+        monday_date (_Date): Gregorian caldendar date (as datetime.date)
+            of the day of the broadcast calendar week.
+
+    Returns:
+        tuple[int, _Date]:
+            (int): Gregorian caldendar date (as datetime.date) of the
+                day of the broadcast calendar year.
+    """
     year_jan_first = datetime(year=year_id_, month=1, day=1,).date()
     # Gets the first day of the broadcast year with the given date.
     _, _, year_start_monday = calc_year_month_ids(year_jan_first,)
@@ -128,13 +119,6 @@ def bcweek_values(date_: _Date) -> tuple[int, int, int, int, int]:
     return year_id_, qtr_id_, month_id_, week_id_, day_id_
 
 
-# def calc_week_start(date__: _Date,) -> _Date:
-#     """Given a datetime.date (date__) returns the date of the Monday
-#         start of that broadcast week.
-#     """
-#     return date__ - timedelta(days=date__.weekday(),)
-
-
 def gen_date_table_broadcast_year(
         year_: int, month_range: _MonthRange,
             ) -> Generator[_DateTableRow, None, None]:
@@ -157,7 +141,7 @@ def gen_date_table_broadcast_year(
     Examples:
     ---------
     Generate tables for December of the previous, all of the current,
-        and January of next year, covering all possible dates
+        and January of next year, covering all included dates
         calculated in BroadcastDate.
 
     import itertools
@@ -175,18 +159,21 @@ def gen_date_table_broadcast_year(
                 yield gen_date_table_broadcast_year(yr_, mnth_rng,)
 
         return pandas.DataFrame(
-                                itertools.chain(
-                                    *_generate_three_years(any_date.year)))
+            itertools.chain(
+                *_generate_three_years(any_date.year)
+            )
+        )
     """
 
     # Value Checks
-    val_err_mn = ValueError(
-        'Month range (month_range) must be a tuple f integers for the first '
+    err_mn_msg = \
+        'Month range (month_range) must be a tuple of integers for the first ' \
         + 'month ID and the last month ID.'
-    )
-    val_err_yr = ValueError(
-        'Year ID (year_) should be an integer representing a valid year number.'
-    )
+    err_yr_msg = \
+        'Year ID (year_) should be an integer representing a valid year number ' \
+        + f"between {MIN_YEAR} and {MAX_YEAR}"
+    val_err_mn = ValueError(err_mn_msg)
+    val_err_yr = ValueError(err_yr_msg)
     if not isinstance(month_range, tuple) or len(month_range)==2:
         raise val_err_mn
     for mnidx in month_range:  # type: ignore
@@ -204,7 +191,7 @@ def gen_date_table_broadcast_year(
         # The broadcast month starts on the Monday of the broadcast week (M - U)
         #   containing the first day of the calendar month.
         month_start = _date - timedelta(days=_date.weekday(),)
-        
+
         yield {
             'year': year_,
             'month_id': month_id,
