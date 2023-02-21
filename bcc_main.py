@@ -91,6 +91,8 @@ def calc_week_id(year_id_: int, monday_date: _Date,) -> tuple[int, _Date]:
         tuple[int, _Date]:
             (int): Gregorian caldendar date (as datetime.date) of the
                 day of the broadcast calendar year.
+            (_Date): datetime.date of the Monday at the beginning of the
+                broadcast calendar year.
     """
     year_jan_first = datetime(year=year_id_, month=1, day=1,).date()
     # Gets the first day of the broadcast year with the given date.
