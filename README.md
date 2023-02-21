@@ -8,7 +8,7 @@ instantiates an object with those indices as `int` properties.
 
 ## Example
 
-For 2023-01-21:
+For 2023-02-21:
 
 - Broadcast calendar year: 2023 (broadcast calendar year 2023  starts on
   2022-12-26)
