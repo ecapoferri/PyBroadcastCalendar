@@ -64,7 +64,6 @@ datetime.date(2019, 7, 22)
 >>> from [bcc_main] | [name_the_module_as_you_like] import reverse_broadcastdate
 
 >>> reverse_broadcastdate(2020, month_id=5)
-
 datetime.date(2020, 4, 27)
 ```
 
